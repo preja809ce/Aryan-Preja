@@ -195,8 +195,8 @@ The frontend automatically uses browser storage when the API or MongoDB is unava
 Open `http://localhost:5173/admin/login`:
 
 ```text
-Email: admin@roomfinder.local
-Password: admin12345
+Email: prejaaryan22@gmail.com
+Password: preja@809
 ```
 
 These credentials are for local demo testing only. Use secure server-side admin authentication before deployment.

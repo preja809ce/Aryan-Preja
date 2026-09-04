@@ -76,7 +76,7 @@ export const authAPI = {
     }
   },
   login: async (data) => {
-    if (data.email === 'admin@roomfinder.local' && data.password === 'admin12345') {
+    if (data.email === 'prejaaryan22@gmail.com' && data.password === 'preja@809') {
       const admin = { id: 'demo-admin', name: 'Website Administrator', email: data.email, role: 'admin' }
       localStorage.setItem('roomfinder_demo_mode', 'true')
       return demoResponse({ token: 'demo-admin-token', user: admin })
