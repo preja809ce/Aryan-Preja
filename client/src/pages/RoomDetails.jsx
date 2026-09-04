@@ -43,6 +43,11 @@ export default function RoomDetails() {
       return
     }
 
+    if (!bookingData.moveInDate || bookingData.duration < 1 || bookingData.occupants < 1) {
+      toast.error('Please provide a move-in date, duration, and occupant count')
+      return
+    }
+
     try {
       await bookingAPI.createBooking({
         roomId: id,
@@ -221,6 +226,7 @@ export default function RoomDetails() {
                       min="1"
                       value={bookingData.duration}
                       onChange={(e) => setBookingData({...bookingData, duration: parseInt(e.target.value)})}
+                      required
                       className="input-field"
                     />
                   </div>
@@ -231,6 +237,7 @@ export default function RoomDetails() {
                       min="1"
                       value={bookingData.occupants}
                       onChange={(e) => setBookingData({...bookingData, occupants: parseInt(e.target.value)})}
+                      required
                       className="input-field"
                     />
                   </div>
