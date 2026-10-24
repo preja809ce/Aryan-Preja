@@ -12,12 +12,12 @@ import bookingRoutes from './routes/bookingRoutes.js';
 import messageRoutes from './routes/messageRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
-// Load environment variables
-dotenv.config();
-
 // Get current directory
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Load the server's environment file regardless of the current working directory.
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 // Create Express app
 const app = express();
@@ -31,13 +31,6 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
-
-// Database Connection. The HTTP server stays available while MongoDB connects.
-mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/room-rental-system', {
-  serverSelectionTimeoutMS: 5000
-})
-  .then(() => console.log('✓ MongoDB connected'))
-  .catch(err => console.error('✗ MongoDB connection failed:', err.message));
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -57,9 +50,25 @@ app.use((req, res) => {
 // Error Handler
 app.use(errorHandler);
 
-// Start Server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`✓ Server running on port ${PORT}`);
-  console.log(`✓ API available at http://localhost:${PORT}`);
-});
+// Start the API only after the database is ready.
+const startServer = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/room-rental-system', {
+      serverSelectionTimeoutMS: 5000
+    });
+  } catch (err) {
+    console.error('✗ MongoDB connection failed:', err.message);
+    console.error('Set MONGO_URI in server/.env and make sure MongoDB is running and reachable.');
+    process.exitCode = 1;
+    return;
+  }
+
+  console.log('✓ MongoDB connected');
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`✓ Server running on port ${PORT}`);
+    console.log(`✓ API available at http://localhost:${PORT}`);
+  });
+};
+
+startServer();

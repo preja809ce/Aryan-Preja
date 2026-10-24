@@ -31,9 +31,10 @@ const bookingSchema = new mongoose.Schema({
   message: String,
   status: {
     type: String,
-    enum: ['Pending', 'Accepted', 'Rejected', 'Cancelled', 'Completed'],
+    enum: ['Pending', 'Payment Required', 'Accepted', 'Rejected', 'Cancelled', 'Confirmed', 'Completed'],
     default: 'Pending'
   },
+  paymentDeadline: Date,
   rejectionReason: String,
   createdAt: {
     type: Date,
@@ -44,5 +45,10 @@ const bookingSchema = new mongoose.Schema({
     default: Date.now
   }
 });
+
+bookingSchema.index(
+  { roomId: 1, moveInDate: 1 },
+  { unique: true, partialFilterExpression: { status: 'Confirmed' } }
+);
 
 export default mongoose.model('Booking', bookingSchema);

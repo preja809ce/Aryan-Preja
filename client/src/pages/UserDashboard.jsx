@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FiBookmark, FiClipboard, FiUser, FiX, FiXCircle } from 'react-icons/fi'
+import { FiBookmark, FiClipboard, FiUser, FiX, FiXCircle, FiCreditCard } from 'react-icons/fi'
 import { bookingAPI } from '../services/api'
 import toast from 'react-hot-toast'
 
@@ -34,12 +34,16 @@ export default function UserDashboard() {
     const colors = {
       Pending: 'bg-yellow-100 text-yellow-800',
       Accepted: 'bg-green-100 text-green-800',
+      'Payment Required': 'bg-orange-100 text-orange-800',
+      Confirmed: 'bg-green-100 text-green-800',
       Rejected: 'bg-red-100 text-red-800',
       Cancelled: 'bg-gray-100 text-gray-800',
       Completed: 'bg-blue-100 text-blue-800'
     }
     return colors[status] || 'bg-gray-100 text-gray-800'
   }
+
+  const getStatusLabel = (status) => status === 'Pending' ? 'Waiting for Owner Approval' : status
 
   const handleCancelBooking = async (booking) => {
     if (!window.confirm('Remove this booking request?')) return
@@ -144,7 +148,7 @@ export default function UserDashboard() {
                       <td className="px-6 py-4">{booking.duration} months</td>
                       <td className="px-6 py-4">
                         <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(booking.status)}`}>
-                          {booking.status}
+                          {getStatusLabel(booking.status)}
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -152,7 +156,12 @@ export default function UserDashboard() {
                         <button onClick={() => setSelectedBooking(booking)} className="text-blue-600 hover:underline font-semibold">
                           View Details
                         </button>
-                        {(booking.status === 'Pending' || booking.status === 'Accepted') && (
+                        {booking.status === 'Payment Required' && (
+                          <button onClick={() => navigate(`/bookings/${booking._id}/payment`)} className="btn-primary inline-flex items-center gap-1 px-3 py-1 text-sm">
+                            <FiCreditCard size={15} /> Pay Now
+                          </button>
+                        )}
+                        {(booking.status === 'Pending' || booking.status === 'Payment Required') && (
                           <button onClick={() => handleCancelBooking(booking)} className="inline-flex items-center gap-1 text-red-600 hover:underline font-semibold">
                             <FiXCircle size={16} /> Remove Request
                           </button>
@@ -181,7 +190,7 @@ export default function UserDashboard() {
               </button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-5 text-sm">
-              <div><p className="text-gray-500">Status</p><span className={`inline-block mt-1 px-3 py-1 rounded-full font-semibold ${getStatusColor(selectedBooking.status)}`}>{selectedBooking.status}</span></div>
+              <div><p className="text-gray-500">Status</p><span className={`inline-block mt-1 px-3 py-1 rounded-full font-semibold ${getStatusColor(selectedBooking.status)}`}>{getStatusLabel(selectedBooking.status)}</span></div>
               <div><p className="text-gray-500">Move-in date</p><p className="font-semibold">{selectedBooking.moveInDate ? new Date(selectedBooking.moveInDate).toLocaleDateString() : 'Not specified'}</p></div>
               <div><p className="text-gray-500">Duration</p><p className="font-semibold">{selectedBooking.duration || 0} months</p></div>
               <div><p className="text-gray-500">Occupants</p><p className="font-semibold">{selectedBooking.occupants || 1}</p></div>
@@ -191,7 +200,15 @@ export default function UserDashboard() {
               <p className="mt-1 text-gray-700">{selectedBooking.message || 'No message added.'}</p>
             </div>
             <div className="flex justify-end gap-3 mt-6">
-              {(selectedBooking.status === 'Pending' || selectedBooking.status === 'Accepted') && (
+              {selectedBooking.status === 'Pending' && (
+                <p className="mt-5 rounded-lg bg-yellow-50 p-4 text-sm text-yellow-800">Your booking request has been sent to the room owner. Payment will be available after the owner accepts your request.</p>
+              )}
+              {selectedBooking.status === 'Payment Required' && (
+                <button onClick={() => { setSelectedBooking(null); navigate(`/bookings/${selectedBooking._id}/payment`) }} className="btn-primary inline-flex items-center gap-2">
+                  <FiCreditCard size={17} /> Pay Now
+                </button>
+              )}
+              {(selectedBooking.status === 'Pending' || selectedBooking.status === 'Payment Required') && (
                 <button onClick={() => { setSelectedBooking(null); handleCancelBooking(selectedBooking) }} className="btn-outline text-red-600 border-red-200">
                   Remove Request
                 </button>

@@ -15,6 +15,7 @@ import AdminLogin from './pages/auth/AdminLogin'
 import AdminDashboard from './pages/AdminDashboard'
 import ForgotPassword from './pages/auth/ForgotPassword'
 import LegalPage from './pages/LegalPage'
+import PaymentPage from './pages/PaymentPage'
 
 function App() {
   return (
@@ -38,6 +39,7 @@ function App() {
             
             {/* User Routes */}
             <Route path="/dashboard" element={<UserDashboard />} />
+            <Route path="/bookings/:id/payment" element={<PaymentPage />} />
             
             {/* Owner Routes */}
             <Route path="/owner/dashboard" element={<OwnerDashboard />} />

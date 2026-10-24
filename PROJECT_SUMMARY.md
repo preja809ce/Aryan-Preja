@@ -426,7 +426,7 @@ npm run dev
 - **Lines of Code:** 5000+
 - **Components:** 15+
 - **API Endpoints:** 15+
-- **Database Models:** 7
+- **Database Models:** 
 - **Pages:** 8+
 - **Features:** 30+
 
@@ -441,3 +441,6 @@ Start building, customizing, and deploying. The architecture is solid and ready 
 ---
 
 **Created with ❤️**
+dir
+npm install
+npm run dev
