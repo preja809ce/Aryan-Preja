@@ -1,11 +1,10 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { FiMail, FiLock } from 'react-icons/fi'
 import { authAPI } from '../../services/api'
 import toast from 'react-hot-toast'
 
 export default function Login() {
-  const navigate = useNavigate()
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -88,7 +87,7 @@ export default function Login() {
 
         <div className="mt-6 text-center">
           <p className="text-gray-600">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link to="/register" className="text-blue-600 font-bold hover:underline">
               Register here
             </Link>

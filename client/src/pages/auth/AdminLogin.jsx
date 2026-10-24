@@ -1,11 +1,10 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { FiLock, FiShield } from 'react-icons/fi'
 import { authAPI } from '../../services/api'
 import toast from 'react-hot-toast'
 
 export default function AdminLogin() {
-  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)

@@ -65,9 +65,20 @@ const startServer = async () => {
 
   console.log('✓ MongoDB connected');
   const PORT = process.env.PORT || 5000;
-  app.listen(PORT, () => {
-    console.log(`✓ Server running on port ${PORT}`);
-    console.log(`✓ API available at http://localhost:${PORT}`);
+  const server = app.listen(PORT, () => {
+    console.log(`Server is running at http://localhost:${PORT}`);
+  });
+
+  server.on('error', async (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.log(`Server is already running at http://localhost:${PORT}. Reuse it, or stop it before starting another instance.`);
+      await mongoose.disconnect();
+      return;
+    }
+
+    console.error('✗ Server failed to start:', err.message);
+    await mongoose.disconnect();
+    process.exitCode = 1;
   });
 };
 

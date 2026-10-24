@@ -1,11 +1,10 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { FiUser, FiMail, FiPhone, FiLock } from 'react-icons/fi'
 import { authAPI } from '../../services/api'
 import toast from 'react-hot-toast'
 
 export default function Register() {
-  const navigate = useNavigate()
   const [formData, setFormData] = useState({
     name: '',
     email: '',

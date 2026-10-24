@@ -87,7 +87,8 @@ export const authAPI = {
     } catch {
       const user = readDemoData(demoUsersKey, []).find((entry) => entry.email === data.email && entry.password === data.password)
       if (!user) throw { response: { data: { message: 'Invalid email or password' } } }
-      const { password, ...safeUser } = user
+      const safeUser = { ...user }
+      delete safeUser.password
       localStorage.setItem('roomfinder_demo_mode', 'true')
       return demoResponse({ token: `demo-token-${safeUser.id}`, user: safeUser })
     }
