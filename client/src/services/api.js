@@ -227,6 +227,9 @@ export const bookingAPI = {
       return demoResponse({ success: true, message: 'Booking cancelled successfully', data: updatedBookings.find((booking) => booking._id === id) })
     }
   },
+  getPayment: (id) => api.get(`/bookings/${id}/payment`),
+  createPaymentOrder: (id) => api.post(`/bookings/${id}/payment/order`),
+  verifyPayment: (id, data) => api.post(`/bookings/${id}/payment/verify`, data),
 }
 
 export const messageAPI = {

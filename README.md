@@ -148,10 +148,12 @@ cp .env.example .env
 ```env
 PORT=5000
 NODE_ENV=development
-MONGO_URI=mongodb://localhost:27017/room-rental-system
+MONGO_URI=mongodb://127.0.0.1:27017/room-rental-system
 JWT_SECRET=your_secret_key_here
 FRONTEND_URL=http://localhost:5173
 ```
+
+Make sure MongoDB is installed and running locally before starting the backend. On Windows, start the MongoDB service from Services (or run `Start-Service MongoDB` in an elevated PowerShell). To use MongoDB Atlas instead, set `MONGO_URI` to your Atlas connection string.
 
 5. Start the server:
 ```bash
