@@ -335,9 +335,8 @@ const users = await User.find({ role: 'owner' }) // Find users with role owner
 - Check import paths
 
 ### "MongoDB connection failed"
-- Ensure MongoDB is running and listening on port 27017, or use a reachable Atlas URI.
-- Check `MONGO_URI` in `server/.env`; the backend loads this file regardless of the working directory.
-- On Windows, start the installed MongoDB service from Services or run `Start-Service MongoDB` in an elevated PowerShell.
+- Ensure MongoDB is running
+- Check MONGO_URI in .env
 
 ### "CORS error"
 - Check FRONTEND_URL in server .env
