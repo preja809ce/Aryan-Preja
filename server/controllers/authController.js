@@ -30,7 +30,7 @@ export const register = async (req, res) => {
       email,
       phone,
       password,
-      role: role || 'user'
+      role: role === 'owner' ? 'owner' : 'user'
     });
     
     await user.save();

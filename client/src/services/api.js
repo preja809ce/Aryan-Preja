@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+const API_URL = import.meta.env.VITE_API_URL || '/api'
 
 const api = axios.create({
   baseURL: API_URL,
@@ -76,7 +76,7 @@ export const authAPI = {
     }
   },
   login: async (data) => {
-    if (data.email === 'prejaaryan22@gmail.com' && data.password === 'preja@809') {
+    if (import.meta.env.DEV && data.email === 'prejaaryan22@gmail.com' && data.password === 'preja@809') {
       const admin = { id: 'demo-admin', name: 'Website Administrator', email: data.email, role: 'admin' }
       localStorage.setItem('roomfinder_demo_mode', 'true')
       return demoResponse({ token: 'demo-admin-token', user: admin })

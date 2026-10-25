@@ -164,6 +164,20 @@ On Windows PowerShell, use `npm.cmd run dev` if PowerShell blocks `npm.ps1`.
 
 Server will run on `http://localhost:5000`
 
+### Deploy to Vercel
+
+The repository includes a Vercel configuration for the React frontend and Express API. The deployment uses MongoDB Atlas; Vercel cannot connect to MongoDB running on your computer.
+
+1. Ensure your MongoDB Atlas cluster accepts connections from your Vercel deployment, and copy its connection string.
+2. Import this GitHub repository in Vercel, keeping the project root at the repository root. Vercel reads the build, output, and API routing settings from `vercel.json`.
+3. Add these environment variables in Vercel under **Project Settings → Environment Variables** for Production (and Preview if needed):
+   - `MONGO_URI` — your Atlas connection string, including the database name.
+   - `JWT_SECRET` — a unique, randomly generated secret; do not reuse the example value.
+   - `FRONTEND_URL` — your deployed Vercel URL, if cross-origin requests are used.
+4. Deploy the project. The app is served at the Vercel URL, with the API available under `/api` and its health check at `/health`.
+
+Do not commit production credentials or paste them into chat. Create administrator accounts through a trusted, private database operation; public registration only allows tenant and owner roles. Optional payment integrations also require their respective production credentials in Vercel.
+
 ### Frontend Setup
 
 1. Navigate to client directory:

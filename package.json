@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Professional Room Rental Management System",
   "private": true,
+  "type": "module",
   "scripts": {
     "install-all": "npm install && cd client && npm install && cd ../server && npm install",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
