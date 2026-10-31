@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { FiPlus, FiHome, FiClipboard, FiEye, FiTrash2, FiExternalLink, FiEdit3 } from 'react-icons/fi'
-import { roomAPI, bookingAPI } from '../services/api'
+import { FiPlus, FiHome, FiClipboard, FiEye, FiTrash2, FiExternalLink, FiEdit3, FiMail, FiPhone, FiMessageSquare } from 'react-icons/fi'
+import { roomAPI, bookingAPI, messageAPI } from '../services/api'
 import toast from 'react-hot-toast'
 
 export default function OwnerDashboard() {
   const navigate = useNavigate()
   const [rooms, setRooms] = useState([])
   const [bookings, setBookings] = useState([])
+  const [messages, setMessages] = useState([])
   const [stats, setStats] = useState({
     totalRooms: 0,
     activeRooms: 0,
@@ -27,16 +28,19 @@ export default function OwnerDashboard() {
 
   const fetchData = async () => {
     try {
-      const [roomsResponse, bookingsResponse] = await Promise.all([
+      const [roomsResponse, bookingsResponse, messagesResponse] = await Promise.all([
         roomAPI.getOwnerRooms(),
-        bookingAPI.getOwnerBookings()
+        bookingAPI.getOwnerBookings(),
+        messageAPI.getOwnerMessages()
       ])
 
       const roomsData = roomsResponse.data.data
       const bookingsData = bookingsResponse.data.data
+      const messagesData = messagesResponse.data.data
 
       setRooms(roomsData)
       setBookings(bookingsData)
+      setMessages(messagesData)
 
       const totalViews = roomsData.reduce((sum, room) => sum + (room.views || 0), 0)
       
@@ -222,6 +226,56 @@ export default function OwnerDashboard() {
                           <FiTrash2 size={15} /> Remove
                         </button>
                       </div>
+                    </div>
+
+                    <div className="bg-white rounded-lg shadow-md p-8 mt-8">
+                      <h2 className="text-2xl font-bold mb-6">Contact Messages</h2>
+                      {loading ? (
+                        <div className="flex justify-center py-8">
+                          <div className="animate-spin h-12 w-12 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+                        </div>
+                      ) : messages.length === 0 ? (
+                        <div className="text-center py-10">
+                          <FiMessageSquare size={48} className="mx-auto text-gray-400 mb-3" />
+                          <p className="text-gray-600">No contact messages yet</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4 max-h-[32rem] overflow-y-auto">
+                          {messages.map((message) => (
+                            <article key={message._id} className="border rounded-lg p-5">
+                              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-3">
+                                <div>
+                                  <h3 className="font-bold text-lg">
+                                    {message.senderName || message.senderId?.name || 'Tenant'}
+                                  </h3>
+                                  <p className="text-sm text-gray-600">
+                                    {message.roomId?.title || 'Room listing'}{message.roomId?.city ? ` • ${message.roomId.city}` : ''}
+                                  </p>
+                                </div>
+                                <time className="text-sm text-gray-500">
+                                  {message.createdAt ? new Date(message.createdAt).toLocaleString() : ''}
+                                </time>
+                              </div>
+                              <div className="flex flex-col sm:flex-row gap-x-6 gap-y-2 text-sm mb-4">
+                                {(message.senderEmail || message.senderId?.email) && (
+                                  <a className="inline-flex items-center gap-2 text-blue-700 hover:underline" href={`mailto:${message.senderEmail || message.senderId.email}`}>
+                                    <FiMail /> {message.senderEmail || message.senderId.email}
+                                  </a>
+                                )}
+                                {(message.senderPhone || message.senderId?.phone) && (
+                                  <a className="inline-flex items-center gap-2 text-blue-700 hover:underline" href={`tel:${message.senderPhone || message.senderId.phone}`}>
+                                    <FiPhone /> {message.senderPhone || message.senderId.phone}
+                                  </a>
+                                )}
+                                {message.moveInDate && (
+                                  <span className="text-gray-600">Preferred move-in: {new Date(message.moveInDate).toLocaleDateString()}</span>
+                                )}
+                              </div>
+                              <p className="whitespace-pre-wrap rounded-md bg-gray-50 p-4 text-gray-700">{message.message}</p>
+                            </article>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

@@ -62,8 +62,17 @@ export default function RoomDetails() {
 
   const handleContact = async (e) => {
     e.preventDefault()
+    if (!localStorage.getItem('token')) {
+      toast.error('Please login to contact the owner')
+      return
+    }
+
     try {
-      await messageAPI.send({ roomId: id, receiverId: room.ownerId?._id, ...contactData })
+      await messageAPI.send({
+        roomId: id,
+        receiverId: room.ownerId?._id || 'demo-owner',
+        ...contactData
+      })
       toast.success('Your message was sent to the owner.')
       setShowContactForm(false)
       setContactData({ name: '', email: '', phone: '', message: '', moveInDate: '' })

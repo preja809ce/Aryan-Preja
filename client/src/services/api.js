@@ -31,7 +31,7 @@ const demoRoom = {
   furnishing: 'Fully Furnished',
   amenities: ['Wi-Fi', 'Attached Bathroom', 'Bed', 'Wardrobe', 'Hot Water'],
   images: [{ url: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80', isMain: true }],
-  ownerId: { name: 'Demo Owner' },
+  ownerId: { _id: 'demo-owner', name: 'Demo Owner' },
   status: 'Active',
   views: 24,
 }
@@ -235,14 +235,30 @@ export const bookingAPI = {
 
 export const messageAPI = {
   send: async (data) => {
-    try {
-      if (useDemoMode() || String(data.roomId).startsWith('demo-')) throw new Error('demo')
-      return await api.post('/messages', data)
-    } catch {
-      const message = { ...data, _id: `demo-message-${Date.now()}`, createdAt: new Date().toISOString(), read: false }
+    if (useDemoMode() || String(data.roomId).startsWith('demo-')) {
+      const message = {
+        ...data,
+        _id: `demo-message-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        read: false,
+        senderName: data.name,
+        senderEmail: data.email,
+        senderPhone: data.phone,
+      }
       writeDemoData(demoMessagesKey, [...readDemoData(demoMessagesKey, []), message])
       return demoResponse({ success: true, data: message })
     }
+    return api.post('/messages', data)
+  },
+  getOwnerMessages: async () => {
+    if (useDemoMode()) {
+      const ownerId = localStorage.getItem('userId') || 'demo-owner'
+      const messages = readDemoData(demoMessagesKey, []).filter(
+        (message) => message.receiverId === ownerId || message.receiverId === 'demo-owner'
+      )
+      return demoResponse({ success: true, data: messages })
+    }
+    return api.get('/messages/owner')
   },
 }
 
