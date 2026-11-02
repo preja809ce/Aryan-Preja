@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FiMail, FiLock } from 'react-icons/fi'
+import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi'
 import { authAPI, clearStoredSession } from '../../services/api'
 import toast from 'react-hot-toast'
 
@@ -10,6 +10,7 @@ export default function Login() {
     password: ''
   })
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -69,14 +70,23 @@ export default function Login() {
             <div className="relative">
               <FiLock className="absolute left-3 top-3 text-gray-400" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="Enter your password"
                 required
-                className="input-field pl-10"
+                className="input-field pl-10 pr-12"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((visible) => !visible)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-pressed={showPassword}
+                className="absolute right-3 top-3 text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? <FiEyeOff aria-hidden="true" /> : <FiEye aria-hidden="true" />}
+              </button>
             </div>
           </div>
 
