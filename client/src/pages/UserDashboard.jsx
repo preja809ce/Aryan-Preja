@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FiBookmark, FiClipboard, FiUser, FiX, FiXCircle, FiCreditCard } from 'react-icons/fi'
+import { FiBookmark, FiClipboard, FiUser, FiX, FiXCircle, FiCreditCard, FiPhone } from 'react-icons/fi'
 import { bookingAPI } from '../services/api'
 import toast from 'react-hot-toast'
 
@@ -199,6 +199,18 @@ export default function UserDashboard() {
               <p className="text-gray-500 text-sm">Message</p>
               <p className="mt-1 text-gray-700">{selectedBooking.message || 'No message added.'}</p>
             </div>
+            {['Accepted', 'Payment Required', 'Confirmed'].includes(selectedBooking.status) && selectedBooking.roomId?.ownerId?.phone && (
+              <div className="mt-4 rounded-lg bg-green-50 p-4">
+                <p className="text-sm font-semibold text-green-800">Owner contact</p>
+                <a
+                  href={`tel:${selectedBooking.roomId.ownerId.phone}`}
+                  className="mt-1 inline-flex items-center gap-2 font-semibold text-green-800 hover:underline"
+                >
+                  <FiPhone aria-hidden="true" />
+                  {selectedBooking.roomId.ownerId.phone}
+                </a>
+              </div>
+            )}
             <div className="flex justify-end gap-3 mt-6">
               {selectedBooking.status === 'Pending' && (
                 <p className="mt-5 rounded-lg bg-yellow-50 p-4 text-sm text-yellow-800">Your booking request has been sent to the room owner. Payment will be available after the owner accepts your request.</p>

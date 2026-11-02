@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import Room from '../models/Room.js';
 import Booking from '../models/Booking.js';
 import { createRoom, updateRoom, deleteRoom } from '../controllers/roomController.js';
-import { getOwnerBookings, updateBookingStatus } from '../controllers/bookingController.js';
+import { getMyBookings, getOwnerBookings, updateBookingStatus } from '../controllers/bookingController.js';
 
 const createResponse = () => ({
   statusCode: null,
@@ -126,6 +126,41 @@ test('owner booking list is selected through rooms actually owned by the owner',
     assert.deepEqual(response.body.data, expectedBookings);
   } finally {
     Room.find = originalRoomFind;
+    Booking.find = originalBookingFind;
+  }
+});
+
+test('tenant receives owner phone only after booking is accepted', async () => {
+  const originalBookingFind = Booking.find;
+  const bookings = [
+    {
+      status: 'Pending',
+      roomId: { ownerId: { name: 'Owner A', phone: '1111111111' } },
+      toObject() {
+        return { status: this.status, roomId: structuredClone(this.roomId) };
+      }
+    },
+    {
+      status: 'Payment Required',
+      roomId: { ownerId: { name: 'Owner B', phone: '2222222222' } },
+      toObject() {
+        return { status: this.status, roomId: structuredClone(this.roomId) };
+      }
+    }
+  ];
+  Booking.find = () => ({
+    populate() { return this; },
+    then(resolve, reject) { return Promise.resolve(bookings).then(resolve, reject); }
+  });
+
+  try {
+    const response = createResponse();
+    await getMyBookings({ userId: 'tenant-A' }, response);
+
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.body.data[0].roomId.ownerId.phone, undefined);
+    assert.equal(response.body.data[1].roomId.ownerId.phone, '2222222222');
+  } finally {
     Booking.find = originalBookingFind;
   }
 });

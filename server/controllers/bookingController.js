@@ -76,12 +76,27 @@ export const createBooking = async (req, res) => {
 export const getMyBookings = async (req, res) => {
   try {
     const bookings = await Booking.find({ userId: req.userId })
-      .populate('roomId')
-      .populate('ownerId', 'name phone profileImage');
+      .populate({
+        path: 'roomId',
+        populate: { path: 'ownerId', select: 'name phone profileImage' }
+      })
+      .populate('ownerId', 'name profileImage');
+
+    const data = bookings.map((booking) => {
+      const bookingData = booking.toObject();
+      const contactAllowed = ['Accepted', 'Payment Required', 'Confirmed'].includes(bookingData.status);
+      const owner = bookingData.roomId?.ownerId;
+
+      if (owner && !contactAllowed) {
+        delete owner.phone;
+      }
+
+      return bookingData;
+    });
     
     res.status(200).json({
       success: true,
-      data: bookings
+      data
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
