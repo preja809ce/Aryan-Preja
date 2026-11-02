@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FiMail, FiLock } from 'react-icons/fi'
-import { authAPI } from '../../services/api'
+import { authAPI, clearStoredSession } from '../../services/api'
 import toast from 'react-hot-toast'
 
 export default function Login() {
@@ -21,9 +21,13 @@ export default function Login() {
     setLoading(true)
 
     try {
-      const response = await authAPI.login(formData)
+      const response = await authAPI.login({
+        ...formData,
+        email: formData.email.trim().toLowerCase()
+      })
       const { token, user } = response.data
 
+      clearStoredSession()
       localStorage.setItem('token', token)
       localStorage.setItem('userId', user.id)
       localStorage.setItem('userRole', user.role)

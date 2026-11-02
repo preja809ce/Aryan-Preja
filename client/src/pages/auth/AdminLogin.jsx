@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FiLock, FiShield } from 'react-icons/fi'
-import { authAPI } from '../../services/api'
+import { authAPI, clearStoredSession } from '../../services/api'
 import toast from 'react-hot-toast'
 
 export default function AdminLogin() {
@@ -13,14 +13,14 @@ export default function AdminLogin() {
     event.preventDefault()
     setLoading(true)
     try {
-      const response = await authAPI.login({ email, password })
-      if (response.data.user.role !== 'admin') throw new Error('Admin access only')
+      const response = await authAPI.adminLogin({ email: email.trim().toLowerCase(), password })
+      clearStoredSession()
       localStorage.setItem('token', response.data.token)
       localStorage.setItem('userId', response.data.user.id)
-      localStorage.setItem('userRole', 'admin')
+      localStorage.setItem('userRole', response.data.user.role)
       window.location.href = '/admin/dashboard'
     } catch (error) {
-      toast.error(error.message === 'Admin access only' ? error.message : error.response?.data?.message || 'Invalid administrator credentials')
+      toast.error(error.response?.data?.message || 'Administrator login failed')
     } finally {
       setLoading(false)
     }

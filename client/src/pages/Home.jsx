@@ -1,13 +1,34 @@
 import { Link } from 'react-router-dom'
 import { FiSearch, FiMapPin, FiHome, FiDollarSign } from 'react-icons/fi'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { roomAPI } from '../services/api'
 
 export default function Home() {
+  const [featuredRooms, setFeaturedRooms] = useState([])
+  const [roomsLoading, setRoomsLoading] = useState(true)
   const [searchFilters, setSearchFilters] = useState({
     city: '',
     minPrice: '',
     maxPrice: '',
   })
+
+  useEffect(() => {
+    let active = true
+    roomAPI.getAllRooms({ limit: 6 })
+      .then((response) => {
+        if (active) setFeaturedRooms(response.data.data)
+      })
+      .catch((error) => {
+        console.error('Error fetching featured rooms:', error)
+      })
+      .finally(() => {
+        if (active) setRoomsLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [])
 
   const handleSearch = (e) => {
     e.preventDefault()
@@ -147,24 +168,44 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center mb-12">Featured Rooms</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((room) => (
-              <div key={room} className="card overflow-hidden">
-                <div className="h-48 bg-gray-300 flex items-center justify-center">
-                  <FiHome size={64} className="text-gray-400" />
-                </div>
-                <div className="p-4">
-                  <h3 className="font-bold text-lg mb-2">Beautiful Single Room</h3>
-                  <p className="text-gray-600 text-sm mb-4">Near University, Palampur</p>
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="text-2xl font-bold text-blue-600">₹8,000</span>
-                    <span className="text-sm text-gray-600">/month</span>
-                  </div>
-                  <Link to="/room/1" className="btn-primary w-full text-center">
-                    View Details
-                  </Link>
-                </div>
+            {roomsLoading ? (
+              <div className="col-span-full flex justify-center py-8">
+                <div className="animate-spin h-10 w-10 border-4 border-blue-600 border-t-transparent rounded-full" />
               </div>
-            ))}
+            ) : featuredRooms.length > 0 ? (
+              featuredRooms.map((room) => {
+                const image = room.images?.find((item) => item.isMain)?.url || room.images?.[0]?.url
+                return (
+                  <div key={room._id} className="card overflow-hidden">
+                    <div className="h-48 bg-gray-300 flex items-center justify-center">
+                      {image ? (
+                        <img src={image} alt={room.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <FiHome size={64} className="text-gray-400" />
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-bold text-lg mb-2 line-clamp-1">{room.title}</h3>
+                      <p className="text-gray-600 text-sm mb-4">{room.city}</p>
+                      <div className="flex justify-between items-center mb-4">
+                        <span className="text-2xl font-bold text-blue-600">₹{Number(room.rent).toLocaleString('en-IN')}</span>
+                        <span className="text-sm text-gray-600">/month</span>
+                      </div>
+                      <Link to={`/room/${room._id}`} className="btn-primary w-full text-center">
+                        View Details
+                      </Link>
+                    </div>
+                  </div>
+                )
+              })
+            ) : (
+              <div className="col-span-full text-center py-8">
+                <p className="text-gray-600 mb-4">No rooms are currently available.</p>
+                <Link to="/browse" className="text-blue-600 font-semibold hover:underline">
+                  Browse all rooms
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </section>

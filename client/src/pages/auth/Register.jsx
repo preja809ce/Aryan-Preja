@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FiUser, FiMail, FiPhone, FiLock } from 'react-icons/fi'
-import { authAPI } from '../../services/api'
+import { authAPI, clearStoredSession } from '../../services/api'
 import toast from 'react-hot-toast'
 
 export default function Register() {
@@ -33,7 +33,7 @@ export default function Register() {
     try {
       const response = await authAPI.register({
         name: formData.name,
-        email: formData.email,
+        email: formData.email.trim().toLowerCase(),
         phone: formData.phone,
         password: formData.password,
         role: formData.role
@@ -41,6 +41,7 @@ export default function Register() {
 
       const { token, user } = response.data
 
+      clearStoredSession()
       localStorage.setItem('token', token)
       localStorage.setItem('userId', user.id)
       localStorage.setItem('userRole', user.role)

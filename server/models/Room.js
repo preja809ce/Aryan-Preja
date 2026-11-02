@@ -83,7 +83,7 @@ const roomSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ['Active', 'Pending Approval', 'Rented', 'Unavailable', 'Rejected'],
-    default: 'Pending Approval'
+    default: 'Active'
   },
   views: {
     type: Number,

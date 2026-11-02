@@ -90,7 +90,9 @@ export const getMyBookings = async (req, res) => {
 
 export const getOwnerBookings = async (req, res) => {
   try {
-    const bookings = await Booking.find({ ownerId: req.userId })
+    const roomFilter = req.userRole === 'admin' ? {} : { ownerId: req.userId };
+    const rooms = await Room.find(roomFilter).select('_id');
+    const bookings = await Booking.find({ roomId: { $in: rooms.map((room) => room._id) } })
       .populate('roomId')
       .populate('userId', 'name email phone');
     
@@ -112,7 +114,12 @@ export const updateBookingStatus = async (req, res) => {
       return res.status(404).json({ message: 'Booking not found' });
     }
     
-    if (booking.ownerId.toString() !== req.userId) {
+    const room = await Room.findById(booking.roomId);
+    if (!room) {
+      return res.status(404).json({ message: 'Room for this booking was not found' });
+    }
+
+    if (req.userRole !== 'admin' && room.ownerId.toString() !== req.userId) {
       return res.status(403).json({ message: 'Not authorized to update this booking' });
     }
     

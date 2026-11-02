@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { FiShield, FiUsers, FiHome, FiClipboard, FiTrash2, FiEye } from 'react-icons/fi'
-import { bookingAPI, roomAPI } from '../services/api'
+import { bookingAPI, clearStoredSession, roomAPI } from '../services/api'
 import toast from 'react-hot-toast'
 
 const usersKey = 'roomfinder_demo_users'
@@ -48,9 +48,7 @@ export default function AdminDashboard() {
   }
 
   const logout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('userId')
-    localStorage.removeItem('userRole')
+    clearStoredSession()
     window.location.href = '/'
   }
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { FiPlus, FiHome, FiClipboard, FiEye, FiTrash2, FiExternalLink, FiEdit3, FiMail, FiPhone, FiMessageSquare } from 'react-icons/fi'
-import { roomAPI, bookingAPI, messageAPI } from '../services/api'
+import { authAPI, roomAPI, bookingAPI, messageAPI } from '../services/api'
 import toast from 'react-hot-toast'
 
 export default function OwnerDashboard() {
@@ -9,6 +9,7 @@ export default function OwnerDashboard() {
   const [rooms, setRooms] = useState([])
   const [bookings, setBookings] = useState([])
   const [messages, setMessages] = useState([])
+  const [owner, setOwner] = useState(null)
   const [stats, setStats] = useState({
     totalRooms: 0,
     activeRooms: 0,
@@ -27,30 +28,49 @@ export default function OwnerDashboard() {
   }, [])
 
   const fetchData = async () => {
+    setLoading(true)
     try {
-      const [roomsResponse, bookingsResponse, messagesResponse] = await Promise.all([
+      const [profileResponse, roomsResponse, bookingsResponse, messagesResponse] = await Promise.all([
+        authAPI.getCurrentUser(),
         roomAPI.getOwnerRooms(),
         bookingAPI.getOwnerBookings(),
         messageAPI.getOwnerMessages()
       ])
 
-      const roomsData = roomsResponse.data.data
-      const bookingsData = bookingsResponse.data.data
+      const profile = profileResponse.data.user
+      if (!profile?._id || profile.role !== 'owner') {
+        throw new Error('The authenticated account is not an owner')
+      }
+
+      const ownedRooms = roomsResponse.data.data.filter((room) =>
+        String(room.ownerId?._id || room.ownerId) === String(profile._id)
+      )
+      const ownedRoomIds = new Set(ownedRooms.map((room) => String(room._id)))
+      const bookingsData = bookingsResponse.data.data.filter((booking) => {
+        const roomId = booking.roomId?._id || booking.roomId
+        return roomId && ownedRoomIds.has(String(roomId))
+      })
       const messagesData = messagesResponse.data.data
 
-      setRooms(roomsData)
+      setOwner(profile)
+      setRooms(ownedRooms)
       setBookings(bookingsData)
       setMessages(messagesData)
 
-      const totalViews = roomsData.reduce((sum, room) => sum + (room.views || 0), 0)
+      const totalViews = ownedRooms.reduce((sum, room) => sum + (room.views || 0), 0)
       
       setStats({
-        totalRooms: roomsData.length,
-        activeRooms: roomsData.filter(r => r.status === 'Active').length,
+        totalRooms: ownedRooms.length,
+        activeRooms: ownedRooms.filter(r => r.status === 'Active').length,
         pendingRequests: bookingsData.filter(b => b.status === 'Pending').length,
         totalViews
       })
     } catch (error) {
+      setOwner(null)
+      setRooms([])
+      setBookings([])
+      setMessages([])
+      setStats({ totalRooms: 0, activeRooms: 0, pendingRequests: 0, totalViews: 0 })
       toast.error('Failed to load dashboard')
     } finally {
       setLoading(false)
@@ -82,7 +102,9 @@ export default function OwnerDashboard() {
 
   const refreshRooms = async () => {
     const response = await roomAPI.getOwnerRooms()
-    const roomsData = response.data.data
+    const roomsData = response.data.data.filter((room) =>
+      String(room.ownerId?._id || room.ownerId) === String(owner?._id)
+    )
     setRooms(roomsData)
     setStats(prev => ({ ...prev, totalRooms: roomsData.length, activeRooms: roomsData.filter(room => room.status === 'Active').length, totalViews: roomsData.reduce((sum, room) => sum + (room.views || 0), 0) }))
   }
@@ -126,6 +148,7 @@ export default function OwnerDashboard() {
           <div>
             <h1 className="text-3xl font-bold">Owner Dashboard</h1>
             <p className="text-gray-600">Manage your room listings and bookings</p>
+            {owner && <p className="text-sm text-gray-500 mt-1">{owner.name} · {owner.email}</p>}
           </div>
           <Link to="/owner/add-room" className="flex items-center gap-2 btn-primary">
             <FiPlus size={20} />

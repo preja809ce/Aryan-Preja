@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FiMenu, FiX, FiHome, FiLogOut } from 'react-icons/fi'
+import { clearStoredSession } from '../../services/api'
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
@@ -8,10 +9,9 @@ export default function Navbar() {
   const userRole = localStorage.getItem('userRole')
 
   const handleLogout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('userId')
-    localStorage.removeItem('userRole')
+    clearStoredSession()
     setIsLoggedIn(false)
+    window.location.href = '/'
   }
 
   return (
