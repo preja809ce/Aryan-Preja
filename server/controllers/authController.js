@@ -1,5 +1,9 @@
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import { isEmailConfigured, sendPasswordResetEmail } from '../utils/email.js';
+
+const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000;
 
 const generateToken = (userId, role) => {
   return jwt.sign(
@@ -101,6 +105,86 @@ const loginWithRole = async (req, res, requiredRole) => {
 
 export const login = (req, res) => loginWithRole(req, res);
 export const adminLogin = (req, res) => loginWithRole(req, res, 'admin');
+
+export const requestPasswordReset = async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body.email);
+    if (!email) {
+      return res.status(400).json({ message: 'A valid email is required' });
+    }
+
+    const isLocalDevelopment = process.env.NODE_ENV === 'development' ||
+      (!process.env.NODE_ENV && !process.env.VERCEL);
+    const frontendUrl = process.env.FRONTEND_URL ||
+      (isLocalDevelopment ? 'http://localhost:5173' : '');
+    if ((!isEmailConfigured() || !frontendUrl) && !isLocalDevelopment) {
+      return res.status(503).json({ message: 'Password reset email and frontend URL must be configured. Contact the site administrator.' });
+    }
+
+    const user = await findUserByEmail(email);
+    const response = {
+      success: true,
+      message: 'If an account exists for this email, password reset instructions have been sent.'
+    };
+
+    if (!user) {
+      return res.status(200).json(response);
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.passwordResetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+    user.passwordResetExpiresAt = new Date(Date.now() + PASSWORD_RESET_TTL_MS);
+    await user.save();
+
+    const resetUrl = new URL('/forgot-password', frontendUrl);
+    resetUrl.searchParams.set('token', resetToken);
+    resetUrl.searchParams.set('email', user.email);
+
+    if (isEmailConfigured()) {
+      await sendPasswordResetEmail(user.email, resetUrl.toString());
+    } else {
+      response.resetUrl = resetUrl.toString();
+    }
+
+    return res.status(200).json(response);
+  } catch (error) {
+    return res.status(500).json({ message: `Could not send password reset instructions: ${error.message}` });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body.email);
+    const { token, password } = req.body;
+
+    if (!email || typeof token !== 'string' || !token || typeof password !== 'string') {
+      return res.status(400).json({ message: 'Email, reset token, and new password are required' });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters long' });
+    }
+
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await User.findOne({
+      email,
+      passwordResetTokenHash: tokenHash,
+      passwordResetExpiresAt: { $gt: new Date() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Password reset link is invalid or has expired. Request a new one.' });
+    }
+
+    user.password = password;
+    user.passwordResetTokenHash = undefined;
+    user.passwordResetExpiresAt = undefined;
+    await user.save();
+
+    return res.status(200).json({ success: true, message: 'Password changed successfully. You can now sign in.' });
+  } catch (error) {
+    return res.status(500).json({ message: `Could not reset password: ${error.message}` });
+  }
+};
 
 export const logout = (req, res) => {
   res.status(200).json({ success: true, message: 'Logged out successfully' });
