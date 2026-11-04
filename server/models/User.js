@@ -6,7 +6,8 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please provide a name'],
     trim: true,
-    minlength: [3, 'Name must be at least 3 characters long']
+    minlength: [3, 'Name must be at least 3 characters long'],
+    match: [/^[A-Za-z][A-Za-z\s.'-]*$/, 'Name can contain only letters, spaces, periods, apostrophes, and hyphens']
   },
   email: {
     type: String,

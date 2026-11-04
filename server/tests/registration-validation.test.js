@@ -43,6 +43,23 @@ test('registration rejects names shorter than three trimmed characters', async (
   }
 });
 
+test('registration rejects names with numbers or invalid characters', async () => {
+  const originalFindOne = User.findOne;
+  User.findOne = async () => null;
+
+  try {
+    for (const name of ['A1b', 'John2 Doe', 'Ravi@123']) {
+      const response = createResponse();
+      await register({ body: { ...validRegistration, name } }, response);
+
+      assert.equal(response.statusCode, 400, `Expected ${name} to be rejected`);
+      assert.match(response.body.message, /only letters|apostrophes|hyphens|at least 3 characters/i);
+    }
+  } finally {
+    User.findOne = originalFindOne;
+  }
+});
+
 test('registration rejects mobile numbers that are not valid 10-digit Indian numbers', async () => {
   const originalFindOne = User.findOne;
   let queried = false;

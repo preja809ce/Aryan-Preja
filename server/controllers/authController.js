@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { isEmailConfigured, sendPasswordResetEmail } from '../utils/email.js';
 
 const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000;
+const NAME_PATTERN = /^[A-Za-z][A-Za-z\s.'-]*$/;
 
 const generateToken = (userId, role) => {
   return jwt.sign(
@@ -47,6 +48,9 @@ export const register = async (req, res) => {
     }
     if (normalizedName.length < 3) {
       return res.status(400).json({ message: 'Name must be at least 3 characters long' });
+    }
+    if (!NAME_PATTERN.test(normalizedName)) {
+      return res.status(400).json({ message: 'Name can contain only letters, spaces, periods, apostrophes, and hyphens' });
     }
     if (!/^[6-9]\d{9}$/.test(normalizedPhone)) {
       return res.status(400).json({ message: 'Enter a valid 10-digit Indian mobile number' });

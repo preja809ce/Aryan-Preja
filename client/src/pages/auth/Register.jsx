@@ -4,6 +4,8 @@ import { FiUser, FiMail, FiPhone, FiLock } from 'react-icons/fi'
 import { authAPI, clearStoredSession } from '../../services/api'
 import toast from 'react-hot-toast'
 
+const NAME_PATTERN = /^[A-Za-z][A-Za-z\s.'-]*$/
+
 export default function Register() {
   const [formData, setFormData] = useState({
     name: '',
@@ -19,15 +21,23 @@ export default function Register() {
     const { name, value } = e.target
     const nextValue = name === 'phone'
       ? value.replace(/\D/g, '').slice(0, 10)
-      : value
+      : name === 'name'
+        ? value.replace(/[^A-Za-z\s.'-]/g, '')
+        : value
     setFormData(prev => ({ ...prev, [name]: nextValue }))
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    if (formData.name.trim().length < 3) {
+    const trimmedName = formData.name.trim()
+    if (trimmedName.length < 3) {
       toast.error('Name must be at least 3 characters long')
+      return
+    }
+
+    if (!NAME_PATTERN.test(trimmedName)) {
+      toast.error('Name can contain only letters, spaces, periods, apostrophes, and hyphens')
       return
     }
 
