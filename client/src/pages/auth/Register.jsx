@@ -17,11 +17,24 @@ export default function Register() {
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+    const nextValue = name === 'phone'
+      ? value.replace(/\D/g, '').slice(0, 10)
+      : value
+    setFormData(prev => ({ ...prev, [name]: nextValue }))
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+
+    if (formData.name.trim().length < 3) {
+      toast.error('Name must be at least 3 characters long')
+      return
+    }
+
+    if (!/^[6-9]\d{9}$/.test(formData.phone)) {
+      toast.error('Enter a valid 10-digit Indian mobile number')
+      return
+    }
 
     if (formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match')
@@ -32,7 +45,7 @@ export default function Register() {
 
     try {
       const response = await authAPI.register({
-        name: formData.name,
+        name: formData.name.trim(),
         email: formData.email.trim().toLowerCase(),
         phone: formData.phone,
         password: formData.password,
@@ -73,6 +86,7 @@ export default function Register() {
                 onChange={handleChange}
                 placeholder="Enter your name"
                 required
+                minLength={3}
                 className="input-field pl-10"
               />
             </div>
@@ -103,8 +117,12 @@ export default function Register() {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                placeholder="Enter your phone"
+                placeholder="10-digit Indian mobile number"
                 required
+                inputMode="numeric"
+                pattern="[6-9][0-9]{9}"
+                minLength={10}
+                maxLength={10}
                 className="input-field pl-10"
               />
             </div>

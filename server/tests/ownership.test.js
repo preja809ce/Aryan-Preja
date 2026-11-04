@@ -33,6 +33,9 @@ test('room creation always assigns the authenticated owner', async () => {
         roomType: 'Single',
         rent: 8000,
         city: 'Palampur',
+        state: 'Himachal Pradesh',
+        address: '12 Lane 4, Near Bus Stand, Palampur',
+        pincode: '176061',
         ownerId: '64b000000000000000000002',
         status: 'Active'
       }
@@ -41,6 +44,36 @@ test('room creation always assigns the authenticated owner', async () => {
     assert.equal(response.statusCode, 201);
     assert.equal(response.body.data.ownerId.toString(), '64b000000000000000000001');
     assert.equal(response.body.data.status, 'Active');
+  } finally {
+    Room.prototype.save = originalSave;
+  }
+});
+
+test('room creation rejects non-Indian locations', async () => {
+  const originalSave = Room.prototype.save;
+  Room.prototype.save = async function() { return this; };
+
+  try {
+    const response = createResponse();
+    await createRoom({
+      userId: '64b000000000000000000001',
+      body: {
+        title: 'Room B',
+        description: 'Bad location',
+        propertyType: 'Single Room',
+        roomType: 'Single',
+        rent: 7000,
+        city: 'Paris',
+        state: 'France',
+        address: '12 Avenue de Paris',
+        pincode: '75001',
+        ownerId: '64b000000000000000000002',
+        status: 'Active'
+      }
+    }, response);
+
+    assert.equal(response.statusCode, 400);
+    assert.match(response.body.message, /Indian|state/i);
   } finally {
     Room.prototype.save = originalSave;
   }

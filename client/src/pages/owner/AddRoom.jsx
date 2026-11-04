@@ -4,9 +4,67 @@ import { FiArrowLeft, FiUpload, FiX } from 'react-icons/fi'
 import { roomAPI } from '../../services/api'
 import toast from 'react-hot-toast'
 
+const INDIAN_STATES = [
+  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 'Haryana',
+  'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur',
+  'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu',
+  'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal', 'Andaman and Nicobar Islands',
+  'Chandigarh', 'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Jammu and Kashmir',
+  'Ladakh', 'Lakshadweep', 'Puducherry'
+]
+
+const normalizeText = (value = '') => String(value).trim().replace(/\s+/g, ' ')
+
+const isValidIndianAddress = (value = '') => {
+  const normalized = normalizeText(value)
+  return normalized.length >= 10 && /[A-Za-z]/.test(normalized) && /^[A-Za-z0-9][A-Za-z0-9\s,./#&'-]*[A-Za-z0-9]$/.test(normalized)
+}
+
+const isValidIndianCity = (value = '') => {
+  const normalized = normalizeText(value)
+  return normalized.length >= 2 && /^[A-Za-z][A-Za-z\s.'-]*$/.test(normalized)
+}
+
+const validateLocationDetails = ({ state, city, address, pincode }) => {
+  if (!state) return 'State is required for listing in India.'
+  if (!INDIAN_STATES.some(item => item.toLowerCase() === normalizeText(state).toLowerCase())) {
+    return 'Only Indian states and union territories are allowed.'
+  }
+  if (!city || !isValidIndianCity(city)) {
+    return 'City must be a valid Indian city name.'
+  }
+  if (!address || !isValidIndianAddress(address)) {
+    return 'Address must be a valid Indian address using letters and common address characters.'
+  }
+  if (pincode && !/^[1-9][0-9]{5}$/.test(String(pincode).trim())) {
+    return 'Pincode must be a valid 6-digit Indian postal code.'
+  }
+  return ''
+}
+
+const formatDateForInput = (date) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const isValidAvailableFromDate = (value) => {
+  if (!value) return true
+
+  const selectedDate = value instanceof Date ? new Date(value) : new Date(`${value}T00:00:00`)
+  if (Number.isNaN(selectedDate.getTime())) return false
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  return selectedDate >= today && selectedDate.getFullYear() === today.getFullYear()
+}
+
 export default function AddRoom() {
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
+  const today = new Date()
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -71,8 +129,19 @@ export default function AddRoom() {
   const removeImage = (index) => setFormData(prev => ({ ...prev, images: prev.images.filter((_, imageIndex) => imageIndex !== index) }))
 
   const handleSubmit = async () => {
-    if (!formData.title || !formData.description || !formData.rent || !formData.city) {
+    if (!formData.title || !formData.description || !formData.rent || !formData.city || !formData.state) {
       toast.error('Please fill all required fields')
+      return
+    }
+
+    const locationError = validateLocationDetails(formData)
+    if (locationError) {
+      toast.error(locationError)
+      return
+    }
+
+    if (formData.availableFrom && !isValidAvailableFromDate(formData.availableFrom)) {
+      toast.error('Available From date must be today or a future date in the current year.')
       return
     }
 
@@ -233,12 +302,13 @@ export default function AddRoom() {
               <h2 className="text-2xl font-bold">Location & Details</h2>
 
               <div>
-                <label className="block font-semibold mb-2">Address</label>
+                <label className="block font-semibold mb-2">Address *</label>
                 <input
                   type="text"
                   name="address"
                   value={formData.address}
                   onChange={handleChange}
+                  placeholder="House number, street, locality"
                   className="input-field"
                 />
               </div>
@@ -246,22 +316,42 @@ export default function AddRoom() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block font-semibold mb-2">City *</label>
-                  <input type="text" name="city" value={formData.city} onChange={handleChange} className="input-field" />
+                  <input
+                    type="text"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleChange}
+                    placeholder="e.g. Pune"
+                    className="input-field"
+                  />
                 </div>
                 <div>
-                  <label className="block font-semibold mb-2">State</label>
-                  <input type="text" name="state" value={formData.state} onChange={handleChange} className="input-field" />
+                  <label className="block font-semibold mb-2">State *</label>
+                  <select name="state" value={formData.state} onChange={handleChange} className="input-field">
+                    <option value="">Select state</option>
+                    {INDIAN_STATES.map(state => (
+                      <option key={state} value={state}>{state}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
               <div>
                 <label className="block font-semibold mb-2">Pincode</label>
-                <input type="text" name="pincode" value={formData.pincode} onChange={handleChange} className="input-field" />
+                <input type="text" name="pincode" value={formData.pincode} onChange={handleChange} className="input-field" placeholder="6-digit Indian pincode" />
               </div>
 
               <div>
                 <label className="block font-semibold mb-2">Available From</label>
-                <input type="date" name="availableFrom" value={formData.availableFrom} onChange={handleChange} className="input-field" />
+                <input
+                  type="date"
+                  name="availableFrom"
+                  min={formatDateForInput(new Date(today.getFullYear(), today.getMonth(), today.getDate()))}
+                  max={`${today.getFullYear()}-12-31`}
+                  value={formData.availableFrom}
+                  onChange={handleChange}
+                  className="input-field"
+                />
               </div>
 
               <div>

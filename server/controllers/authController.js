@@ -37,11 +37,19 @@ const createAuthResponse = (user, res, statusCode, message) => {
 export const register = async (req, res) => {
   try {
     const { name, email, phone, password, role } = req.body;
+    const normalizedName = typeof name === 'string' ? name.trim() : '';
     const normalizedEmail = normalizeEmail(email);
+    const normalizedPhone = typeof phone === 'string' ? phone.trim() : '';
     
     // Validation
-    if (!name || !normalizedEmail || !phone || !password) {
+    if (!normalizedName || !normalizedEmail || !normalizedPhone || typeof password !== 'string' || !password) {
       return res.status(400).json({ message: 'All fields are required' });
+    }
+    if (normalizedName.length < 3) {
+      return res.status(400).json({ message: 'Name must be at least 3 characters long' });
+    }
+    if (!/^[6-9]\d{9}$/.test(normalizedPhone)) {
+      return res.status(400).json({ message: 'Enter a valid 10-digit Indian mobile number' });
     }
     
     const existingUser = await findUserByEmail(normalizedEmail);
@@ -50,9 +58,9 @@ export const register = async (req, res) => {
     }
     
     const user = new User({
-      name: name.trim(),
+      name: normalizedName,
       email: normalizedEmail,
-      phone: phone.trim(),
+      phone: normalizedPhone,
       password,
       role: role === 'owner' ? 'owner' : 'user'
     });
